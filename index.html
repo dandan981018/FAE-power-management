@@ -1,282 +1,41 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8" />
-  <title>FAE Lab 電源使用管理系統</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 900px; margin: auto; padding: 20px; }
-    h2 { text-align: center; margin-bottom: 10px; }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      gap: 8px;
-      margin-top: 20px;
-    }
-    .socket-box {
-      border: 1px solid #888;
-      padding: 6px 8px;
-      cursor: pointer;
-      border-radius: 6px;
-      user-select: none;
-      transition: background-color 0.3s ease;
-      font-size: 14px;
-      /* 固定寬高 */
-      height: 90px;
-      width: 100%;
-      box-sizing: border-box;
+document.addEventListener('click', async e => {
+  const socketBox = e.target.closest('.socket-box');
+  if(socketBox && socketBox.classList.contains('available')) {
+    const socket = socketBox.dataset.socket;
+    const name = document.getElementById('name').value.trim();
+    const purpose = document.getElementById('purpose').value.trim();
+    const system = document.getElementById('system').value.trim();
 
-      /* 內部使用 flex 排版 */
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      overflow: hidden;
-      white-space: normal;
-      word-break: break-word;
+    if(!name){
+      alert('請先輸入姓名');
+      return;
     }
-    .socket-box.available {
-      background-color: #4caf50;
-      color: white;
+    if(!purpose){
+      alert('請先輸入用途');
+      return;
     }
-    .socket-box.used {
-      background-color: #f44336;
-      color: white;
-    }
-    .info-text {
-      flex-grow: 1;
-      overflow: hidden;
-    }
-    button.cancel-btn {
-      align-self: center;
-      padding: 4px 8px;
-      font-size: 12px;
-      border: none;
-      background-color: #ffbaba;
-      border-radius: 4px;
-      cursor: pointer;
-      color: #800000;
-      margin-top: 4px;
-      flex-shrink: 0;
-    }
-    button.cancel-btn:hover {
-      background-color: #ff7b7b;
-    }
-    label {
-      margin-right: 10px;
-    }
-    input[type=text] {
-      padding: 5px;
-      margin-right: 10px;
-      width: 150px;
-    }
-    #rules {
-      margin-top: 30px;
-      border-top: 1px solid #ccc;
-      padding-top: 15px;
-      font-size: 14px;
-      line-height: 1.5;
-      color: #333;
-      max-width: 850px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-  </style>
-
-  <!-- Firebase core SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCThrykIH-kRHVao0rFQnnhEOhn9lVTN0I",
-      authDomain: "fae-lab-power-management.firebaseapp.com",
-      projectId: "fae-lab-power-management",
-      storageBucket: "fae-lab-power-management.firebasestorage.app",
-      messagingSenderId: "237708362565",
-      appId: "1:237708362565:web:cff14a2236ba77586cf42c",
-      measurementId: "G-S5ZP7D3DBG"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    const socketNames = [];
-    for(let i=1; i<=15; i++){
-      socketNames.push("P" + i + "-1");
-      socketNames.push("P" + i + "-2");
-    }
-    for(let i=1; i<=8; i++){
-      socketNames.push("A" + i + "-1");
-      socketNames.push("A" + i + "-2");
+    if(!system){
+      alert('請先輸入系統名稱');
+      return;
     }
 
-    const gridDiv = document.createElement('div');
-    gridDiv.className = 'grid';
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const title2 = document.createElement('h2');
-      title2.textContent = 'FAE Lab 電源使用管理系統';
-      document.body.insertBefore(title2, document.body.firstChild);
-
-      const inputDiv = document.createElement('div');
-      inputDiv.style.textAlign = 'center';
-      inputDiv.style.margin = '10px 0';
-      inputDiv.innerHTML = `
-        <label>姓名：<input type="text" id="name" required></label>
-        <label>用途：<input type="text" id="purpose" required></label>
-        <label>系統名稱：<input type="text" id="system" required></label>
-      `;
-      document.body.insertBefore(inputDiv, title2.nextSibling);
-
-      document.body.insertBefore(gridDiv, inputDiv.nextSibling);
-
-      const rulesDiv = document.createElement('div');
-      rulesDiv.id = 'rules';
-      rulesDiv.innerHTML = `
-        <h3>使用規則說明</h3>
-        <p>請輸入姓名、用途、系統名稱，後點選想要使用的對應插座。<br/>
-        切記GPU stress需特別說明清楚使用的GPU型號與用途，請在用途欄中詳細填寫。</p>
-      `;
-      document.body.appendChild(rulesDiv);
-
-      init();
-    });
-
-    let currentUseDocs = {};
-
-    function formatTimestamp(ts){
-      if(!ts) return '';
-      const d = ts.toDate();
-      return d.getFullYear() + '-' 
-        + String(d.getMonth()+1).padStart(2,'0') + '-' 
-        + String(d.getDate()).padStart(2,'0') + ' ' 
-        + String(d.getHours()).padStart(2,'0') + ':' 
-        + String(d.getMinutes()).padStart(2,'0') + ':' 
-        + String(d.getSeconds()).padStart(2,'0');
+    if(currentUseDocs[socket]){
+      alert('此插座已被使用');
+      return;
     }
 
-    function init(){
-      gridDiv.innerHTML = '';
-      socketNames.forEach(name=>{
-        const box = document.createElement('div');
-        box.className = 'socket-box available';
-        box.dataset.socket = name;
-
-        // 預設空閒樣式內容，用 info-text 包起來
-        const info = document.createElement('div');
-        info.className = 'info-text';
-        info.textContent = name + '\n(空閒)';
-        box.appendChild(info);
-
-        gridDiv.appendChild(box);
+    try{
+      await db.collection('sockets').add({
+        socket,
+        name,
+        purpose,
+        system,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
       });
-
-      db.collection('sockets').orderBy('timestamp', 'desc').onSnapshot(snapshot=>{
-        snapshot.docChanges().forEach(change=>{
-          const doc = change.doc;
-          const data = doc.data();
-          const socketName = data.socket;
-          const box = [...gridDiv.children].find(b=>b.dataset.socket===socketName);
-          if(!box) return;
-          if(change.type === 'added' || change.type === 'modified'){
-            box.classList.remove('available');
-            box.classList.add('used');
-
-            // 清空現有內容
-            box.innerHTML = '';
-
-            // 建立 info-text div 放文字
-            const info = document.createElement('div');
-            info.className = 'info-text';
-            info.innerHTML = `${socketName}<br>${data.name}<br>${data.purpose}<br>${data.system}<br>${formatTimestamp(data.timestamp)}`;
-            box.appendChild(info);
-
-            // 建立取消按鈕
-            const btn = document.createElement('button');
-            btn.className = 'cancel-btn';
-            btn.textContent = '取消使用';
-            btn.dataset.id = doc.id;
-            box.appendChild(btn);
-
-            currentUseDocs[socketName] = doc.id;
-          }
-          else if(change.type === 'removed'){
-            box.classList.remove('used');
-            box.classList.add('available');
-
-            box.innerHTML = '';
-            const info = document.createElement('div');
-            info.className = 'info-text';
-            info.textContent = socketName + '\n(空閒)';
-            box.appendChild(info);
-
-            delete currentUseDocs[socketName];
-          }
-        });
-        attachCancelButtons();
-      });
+      alert('登記成功！');
+    }catch(err){
+      alert('發生錯誤，請稍後再試');
+      console.error(err);
     }
-
-    document.addEventListener('click', async e=>{
-      if(e.target.classList.contains('socket-box')){
-        const socket = e.target.dataset.socket;
-        const name = document.getElementById('name').value.trim();
-        const purpose = document.getElementById('purpose').value.trim();
-        const system = document.getElementById('system').value.trim();
-
-        if(!name){
-          alert('請先輸入姓名');
-          return;
-        }
-        if(!purpose){
-          alert('請先輸入用途');
-          return;
-        }
-        if(!system){
-          alert('請先輸入系統名稱');
-          return;
-        }
-        if(currentUseDocs[socket]){
-          alert('此插座已被使用');
-          return;
-        }
-
-        try{
-          await db.collection('sockets').add({
-            socket,
-            name,
-            purpose,
-            system,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          alert('登記成功！');
-        }catch(err){
-          alert('發生錯誤，請稍後再試');
-          console.error(err);
-        }
-      }
-    });
-
-    function attachCancelButtons(){
-      const buttons = document.querySelectorAll('.cancel-btn');
-      buttons.forEach(btn=>{
-        btn.onclick = async e=>{
-          e.stopPropagation();
-          if(confirm('確定要取消使用嗎？')){
-            const docId = btn.dataset.id;
-            try{
-              await db.collection('sockets').doc(docId).delete();
-              alert('已取消使用');
-            }catch(err){
-              alert('取消失敗');
-              console.error(err);
-            }
-          }
-        };
-      });
-    }
-  </script>
-</head>
-<body>
-  <!-- 已移除標題 h1，頁面更簡潔 -->
-</body>
-</html>
+  }
+});
